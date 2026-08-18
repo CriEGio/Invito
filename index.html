@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invito Matrimonio - Giorgio & Cristina</title>
+    <style>
+        /* --- STILI BASE --- */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #fdfaf6; /* Colore di sfondo neutro */
+            font-family: 'Georgia', serif;
+            /* Altezza extra per permettere lo scroll */
+            height: 160vh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .scroll-hint {
+            margin-top: 50px;
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(10px); }
+            60% { transform: translateY(5px); }
+        }
+
+        /* --- CONTENITORE BUSTA E BIGLIETTO --- */
+        .scene {
+            position: relative;
+            margin-top: 100px;
+            width: 90vw;
+            max-width: 800px;
+            /* Proporzione basata sulle tue immagini landscape */
+            aspect-ratio: 2.5 / 1; 
+            perspective: 1500px;
+        }
+
+        /* --- LA BUSTA --- */
+        .envelope-back {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #d1c5b4;
+            border-radius: 5px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        .envelope-front {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #e3d8c8;
+            border-radius: 5px;
+            z-index: 3;
+            /* Creazione finta chiusura a V della busta */
+            clip-path: polygon(0 100%, 100% 100%, 100% 0, 50% 50%, 0 0);
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 60%;
+            background-color: #c4b6a2;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 4;
+            transform-origin: top;
+            transition: transform 0.8s ease-in-out;
+        }
+
+        /* --- IL BIGLIETTO (ANIMATO) --- */
+        .card-wrapper {
+            position: absolute;
+            bottom: 5%;
+            left: 2.5%;
+            width: 95%;
+            height: 90%;
+            z-index: 2;
+            transition: transform 1s ease-in-out;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .card-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Il retro del biglietto (che contiene le info) */
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* --- ANIMAZIONI ATTIVATE DA CLASSI --- */
+        /* 1. Busta si apre ed esce il biglietto */
+        .scene.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1; /* Va dietro il biglietto quando è aperta */
+        }
+
+        .scene.open .card-wrapper {
+            transform: translateY(-80%); /* Fa scorrere il biglietto verso l'alto */
+            z-index: 5; /* Porta il biglietto in primissimo piano */
+        }
+
+        /* 2. Biglietto si gira */
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* --- SEZIONE RSVP (BOTTONE) --- */
+        .rsvp-section {
+            margin-top: auto;
+            margin-bottom: 50px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        /* Mostra il bottone solo quando la busta è aperta */
+        .scene.open ~ .rsvp-section {
+            opacity: 1;
+        }
+
+        .rsvp-btn {
+            background-color: #e2a527; /* Colore giallo preso dalla grafica */
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(226, 165, 39, 0.4);
+            transition: background-color 0.3s, transform 0.2s;
+            display: inline-block;
+        }
+
+        .rsvp-btn:hover {
+            background-color: #9b8cbd; /* Colore viola preso dalla grafica */
+            transform: scale(1.05);
+        }
+
+        /* Istruzioni per girare il biglietto */
+        .tap-hint {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scroll-hint" id="scroll-hint">
+        Scorri verso il basso per aprire l'invito<br>↓
+    </div>
+
+    <div class="scene" id="envelope-scene">
+        <div class="envelope-back"></div>
+        <div class="envelope-flap"></div>
+        
+        <div class="card-wrapper" id="card-wrapper">
+            <div class="card-inner" id="card-inner">
+                <!-- Fronte: Immagine con la Poesia -->
+                <div class="card-face card-front">
+                    <img src="image_6616cf.jpg" alt="Fronte Invito">
+                </div>
+                <!-- Retro: Immagine con i Dettagli -->
+                <div class="card-face card-back">
+                    <img src="image_6616b2.jpg" alt="Retro Invito - Dettagli">
+                </div>
+            </div>
+        </div>
+
+        <div class="envelope-front"></div>
+    </div>
+
+    <div class="rsvp-section">
+        <a href="INSERISCI_QUI_IL_LINK_DEL_TUO_GOOGLE_FORM" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
+        <div class="tap-hint">Tocca il biglietto per girarlo fronte/retro</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const scene = document.getElementById('envelope-scene');
+            const cardInner = document.getElementById('card-inner');
+            const scrollHint = document.getElementById('scroll-hint');
+
+            // ANIMAZIONE 1: Apri la busta allo scroll
+            window.addEventListener('scroll', () => {
+                // Se l'utente scrolla di almeno 50 pixel, apri la busta
+                if (window.scrollY > 50) {
+                    scene.classList.add('open');
+                    scrollHint.style.opacity = '0'; // Nascondi il testo "Scorri"
+                } else {
+                    // Opzionale: richiudi la busta se si torna in cima
+                    scene.classList.remove('open');
+                    scrollHint.style.opacity = '1';
+                    cardInner.classList.remove('is-flipped'); // Rimetti il biglietto dritto
+                }
+            });
+
+            // ANIMAZIONE 2: Gira il biglietto al click/touch
+            cardInner.addEventListener('click', () => {
+                // Permetti di girare il biglietto solo se la busta è aperta
+                if (scene.classList.contains('open')) {
+                    cardInner.classList.toggle('is-flipped');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
