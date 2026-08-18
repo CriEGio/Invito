@@ -11,7 +11,6 @@
             padding: 0;
             background-color: #fdfaf6;
             font-family: 'Georgia', serif;
-            /* L'altezza extra serve come "pista" per innescare lo scroll */
             height: 150vh; 
         }
 
@@ -23,17 +22,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Sblocca lo scroll interno se i contenuti superano l'altezza dello schermo (Landscape) */
             overflow-y: auto; 
             overflow-x: hidden;
-            scrollbar-width: none; /* Nasconde la scrollbar su Firefox */
+            scrollbar-width: none; 
         }
         
         .sticky-container::-webkit-scrollbar { 
-            display: none; /* Nasconde la scrollbar su Chrome/Safari */
+            display: none; 
         }
 
-        /* Trucco avanzato per centrare l'invito, ma permettere lo scroll se lo schermo è piccolo */
         .sticky-container::before,
         .sticky-container::after {
             content: '';
@@ -50,7 +47,7 @@
             animation: bounce 2s infinite;
             transition: opacity 0.5s ease-in-out;
             z-index: 10;
-            pointer-events: none; /* Impedisce che blocchi i tocchi sullo schermo */
+            pointer-events: none; 
         }
 
         @keyframes bounce {
@@ -65,25 +62,25 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            padding: 40px 0; /* Margine di sicurezza sopra e sotto */
+            padding: 40px 0; 
         }
 
         /* --- IL DISTANZIATORE MAGICO --- */
-        /* Questo elemento cresce quando apri la busta, spingendola in basso in modo che il 
-           biglietto che sale non esca MAI dalla parte superiore dello schermo. */
         .spacer {
             height: 0;
             width: 100%;
-            transition: height 0.8s ease-in-out;
+            /* Animazione di chiusura (Fluida e veloce) */
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition-delay: 0s;
         }
 
-        /* Calcolo esatto: il biglietto sale del 31% della larghezza dello schermo, 
-           quindi il distanziatore spinge giù del 31% */
         .content-group.open .spacer {
             height: 31vw; 
+            /* Animazione di apertura (Effetto molla elegante) */
+            transition: height 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            transition-delay: 0.25s; /* Attende che la linguetta si apra */
         }
 
-        /* Limite per gli schermi grandi (desktop) per evitare proporzioni sballate */
         @media (min-width: 833px) {
             .content-group.open .spacer {
                 height: 260px; 
@@ -131,7 +128,17 @@
             clip-path: polygon(0 0, 100% 0, 50% 100%);
             z-index: 4;
             transform-origin: top;
-            transition: transform 0.8s ease-in-out;
+            /* Animazione di chiusura (Attende che il biglietto entri) */
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition-delay: 0.4s;
+        }
+
+        .content-group.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 1; 
+            /* Animazione di apertura (Veloce e decisa) */
+            transition: transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+            transition-delay: 0s; 
         }
 
         /* --- IL BIGLIETTO (ANIMATO) --- */
@@ -142,7 +149,17 @@
             width: 95%;
             height: 90%;
             z-index: 2;
-            transition: transform 1s ease-in-out;
+            /* Animazione di chiusura */
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition-delay: 0s;
+        }
+
+        .content-group.open .card-wrapper {
+            transform: translateY(-95%); 
+            z-index: 5; 
+            /* Animazione di apertura (Sincronizzata con il distanziatore) */
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            transition-delay: 0.25s;
         }
 
         .card-inner {
@@ -150,7 +167,8 @@
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.8s ease-in-out;
+            /* Flip 3D più morbido e profondo */
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
@@ -176,17 +194,6 @@
             transform: rotateY(180deg);
         }
 
-        /* --- ANIMAZIONI AL MOMENTO DELL'APERTURA --- */
-        .content-group.open .envelope-flap {
-            transform: rotateX(180deg);
-            z-index: 1; 
-        }
-
-        .content-group.open .card-wrapper {
-            transform: translateY(-95%); 
-            z-index: 5; 
-        }
-
         .card-inner.is-flipped {
             transform: rotateY(180deg);
         }
@@ -197,12 +204,18 @@
             text-align: center;
             opacity: 0;
             visibility: hidden; 
-            transition: opacity 1s ease-in-out, visibility 1s;
+            /* Parte leggermente più in basso e più piccolo */
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s ease;
         }
 
         .content-group.open .rsvp-section {
             opacity: 1;
             visibility: visible;
+            transform: translateY(0) scale(1);
+            /* Compare con un bellissimo effetto Pop Up dopo che il biglietto è uscito */
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            transition-delay: 0.6s;
         }
 
         .rsvp-btn {
@@ -260,17 +273,15 @@
         .volume-banner.interactive {
             pointer-events: auto;
             cursor: pointer;
-            background-color: #9b8cbd; /* Viola dal tuo tema per capire che è cliccabile */
+            background-color: #9b8cbd;
             box-shadow: 0 10px 25px rgba(155, 140, 189, 0.5);
         }
     </style>
 </head>
 <body>
 
-    <!-- TRACCIA AUDIO AGGIUNTA -->
     <audio id="invite-audio" src="voice.mp3" preload="auto"></audio>
 
-    <!-- BANNER GESTIONE AUDIO -->
     <div id="volume-banner" class="volume-banner">
         <span id="banner-text">🔊 Alza il volume per ascoltare!</span>
     </div>
@@ -283,7 +294,6 @@
 
         <div class="content-group" id="content-group">
             
-            <!-- Questo div gestisce lo spazio quando la busta si apre -->
             <div class="spacer"></div>
 
             <div class="scene">
@@ -305,7 +315,6 @@
             </div>
 
             <div class="rsvp-section">
-                <!-- Sostituisci il link qui sotto -->
                 <a href="https://forms.gle/m3eYs4e3S3jLevTr6" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
                 <div class="tap-hint">Tocca il biglietto per girarlo fronte/retro</div>
             </div>
@@ -319,44 +328,36 @@
             const cardInner = document.getElementById('card-inner');
             const scrollHint = document.getElementById('scroll-hint');
             
-            // Selettori Audio
             const audio = document.getElementById('invite-audio');
             const volumeBanner = document.getElementById('volume-banner');
             const bannerText = document.getElementById('banner-text');
-            let audioAttempted = false; // Flag per far scattare l'audio una sola volta all'apertura
+            let audioAttempted = false; 
 
             window.addEventListener('scroll', () => {
-                // Apri appena si scorre verso il basso
                 if (window.scrollY > 15) {
                     
-                    // Condizione per assicurarsi che l'evento scatti SOLO nel momento dell'apertura
                     if (!contentGroup.classList.contains('open')) {
                         contentGroup.classList.add('open');
                         scrollHint.style.opacity = '0';
 
-                        // Gestione "Smart" Audio Autoplay
                         if (!audioAttempted) {
                             audioAttempted = true;
                             let playPromise = audio.play();
                             
                             if (playPromise !== undefined) {
                                 playPromise.then(() => {
-                                    // SUCCESSO: Il browser del telefono ha permesso la riproduzione automatica
                                     bannerText.innerHTML = "🔊 Ricordati di alzare il volume!";
                                     volumeBanner.classList.add('show');
                                     volumeBanner.classList.remove('interactive');
                                     
-                                    // Scompare da solo dopo 2.5 secondi
                                     setTimeout(() => {
                                         volumeBanner.classList.remove('show');
                                     }, 2500);
                                     
                                 }).catch(error => {
-                                    // BLOCCATO: Il browser ha impedito l'autoplay (comune su Safari/Chrome Mobile)
                                     bannerText.innerHTML = "🔊 Tocca qui per ascoltare il messaggio";
                                     volumeBanner.classList.add('show', 'interactive');
                                     
-                                    // Quando l'utente tocca il banner, sblocca e avvia l'audio
                                     volumeBanner.addEventListener('click', () => {
                                         audio.play();
                                         volumeBanner.classList.remove('show', 'interactive');
@@ -366,13 +367,11 @@
                         }
                     }
                 } 
-                // Chiudi SOLO se l'utente scorre intenzionalmente tutto indietro fino allo zero assoluto
                 else if (window.scrollY === 0) {
                     contentGroup.classList.remove('open');
                     scrollHint.style.opacity = '1';
                     cardInner.classList.remove('is-flipped');
                     
-                    // Ferma la voce, azzera il timer audio e i controlli per permettere un nuovo ascolto
                     audio.pause();
                     audio.currentTime = 0;
                     audioAttempted = false;
@@ -380,7 +379,6 @@
                 }
             });
 
-            // Gira il biglietto toccandolo
             cardInner.addEventListener('click', () => {
                 if (contentGroup.classList.contains('open')) {
                     cardInner.classList.toggle('is-flipped');
