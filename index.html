@@ -11,12 +11,11 @@
             padding: 0;
             background-color: #fdfaf6;
             font-family: 'Georgia', serif;
-            /* L'altezza extra serve solo per permettere al dito di fare il gesto dello scroll */
+            /* L'altezza extra serve come "pista" per innescare lo scroll */
             height: 150vh; 
         }
 
-        /* --- CONTENITORE FISSO --- */
-        /* Questo blocca la schermata in modo che non sfugga via mentre si scorre */
+        /* --- CONTENITORE FISSO E SCROLLABILE --- */
         .sticky-container {
             position: sticky;
             top: 0;
@@ -24,19 +23,34 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            /* Sblocca lo scroll interno se i contenuti superano l'altezza dello schermo (Landscape) */
+            overflow-y: auto; 
+            overflow-x: hidden;
+            scrollbar-width: none; /* Nasconde la scrollbar su Firefox */
+        }
+        
+        .sticky-container::-webkit-scrollbar { 
+            display: none; /* Nasconde la scrollbar su Chrome/Safari */
         }
 
+        /* Trucco avanzato per centrare l'invito, ma permettere lo scroll se lo schermo è piccolo */
+        .sticky-container::before,
+        .sticky-container::after {
+            content: '';
+            flex: 1;
+        }
+
+        /* --- TESTO "SCORRI" --- */
         .scroll-hint {
             position: absolute;
-            top: 8%;
+            top: 5%;
             font-size: 1.2rem;
             color: #666;
             text-align: center;
             animation: bounce 2s infinite;
             transition: opacity 0.5s ease-in-out;
             z-index: 10;
+            pointer-events: none; /* Impedisce che blocchi i tocchi sullo schermo */
         }
 
         @keyframes bounce {
@@ -45,20 +59,35 @@
             60% { transform: translateY(5px); }
         }
 
-        /* --- GRUPPO ANIMATO (BUSTA + BOTTONE) --- */
+        /* --- GRUPPO CONTENUTI --- */
         .content-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: transform 0.8s ease-in-out;
-            /* Lo abbassiamo leggermente in partenza per lasciare spazio sopra */
-            margin-top: 15vh; 
+            width: 100%;
+            padding: 40px 0; /* Margine di sicurezza sopra e sotto */
         }
 
-        /* Quando la busta si apre, tutto il gruppo (busta+bottone) scende un po' 
-           per fare spazio al biglietto che sale, mantenendo tutto centrato */
-        .content-group.open {
-            transform: translateY(40px);
+        /* --- IL DISTANZIATORE MAGICO --- */
+        /* Questo elemento cresce quando apri la busta, spingendola in basso in modo che il 
+           biglietto che sale non esca MAI dalla parte superiore dello schermo. */
+        .spacer {
+            height: 0;
+            width: 100%;
+            transition: height 0.8s ease-in-out;
+        }
+
+        /* Calcolo esatto: il biglietto sale del 31% della larghezza dello schermo, 
+           quindi il distanziatore spinge giù del 31% */
+        .content-group.open .spacer {
+            height: 31vw; 
+        }
+
+        /* Limite per gli schermi grandi (desktop) per evitare proporzioni sballate */
+        @media (min-width: 833px) {
+            .content-group.open .spacer {
+                height: 260px; 
+            }
         }
 
         /* --- CONTENITORE BUSTA E BIGLIETTO --- */
@@ -139,7 +168,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Evita l'effetto blu di selezione quando si tocca col dito */
             user-select: none;
             -webkit-user-drag: none;
         }
@@ -155,7 +183,6 @@
         }
 
         .content-group.open .card-wrapper {
-            /* Ora il biglietto sale fino in cima, liberandosi dalla busta */
             transform: translateY(-95%); 
             z-index: 5; 
         }
@@ -166,11 +193,9 @@
 
         /* --- SEZIONE RSVP (BOTTONE) --- */
         .rsvp-section {
-            /* Agganciato direttamente sotto la busta */
             margin-top: 30px; 
             text-align: center;
             opacity: 0;
-            /* Rende il bottone cliccabile solo quando è visibile */
             visibility: hidden; 
             transition: opacity 1s ease-in-out, visibility 1s;
         }
@@ -208,16 +233,17 @@
 </head>
 <body>
 
-    <!-- Questo è il contenitore che rimane fisso e ferma lo scorrimento visivo della pagina -->
     <div class="sticky-container">
         
         <div class="scroll-hint" id="scroll-hint">
             Scorri verso il basso per aprire l'invito<br>↓
         </div>
 
-        <!-- Gruppo che tiene insieme la busta e il bottone per un allineamento perfetto -->
         <div class="content-group" id="content-group">
             
+            <!-- Questo div gestisce lo spazio quando la busta si apre -->
+            <div class="spacer"></div>
+
             <div class="scene">
                 <div class="envelope-back"></div>
                 <div class="envelope-flap"></div>
@@ -237,8 +263,8 @@
             </div>
 
             <div class="rsvp-section">
-                <!-- Ricorda di incollare qui il tuo link -->
-                <a href="https://forms.gle/3SMrWcYFJN3yopRC8" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
+                <!-- Sostituisci il link qui sotto -->
+                <a href="https://forms.gle/m3eYs4e3S3jLevTr6" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
                 <div class="tap-hint">Tocca il biglietto per girarlo fronte/retro</div>
             </div>
 
@@ -251,19 +277,21 @@
             const cardInner = document.getElementById('card-inner');
             const scrollHint = document.getElementById('scroll-hint');
 
-            // L'evento "scroll" adesso non fa muovere la pagina, ma accende o spegne l'animazione
             window.addEventListener('scroll', () => {
-                if (window.scrollY > 30) {
+                // Apri appena si scorre verso il basso
+                if (window.scrollY > 15) {
                     contentGroup.classList.add('open');
                     scrollHint.style.opacity = '0';
-                } else {
+                } 
+                // Chiudi SOLO se l'utente scorre intenzionalmente tutto indietro fino allo zero assoluto
+                else if (window.scrollY === 0) {
                     contentGroup.classList.remove('open');
                     scrollHint.style.opacity = '1';
                     cardInner.classList.remove('is-flipped');
                 }
             });
 
-            // Gira il biglietto toccandolo (solo se la busta è aperta)
+            // Gira il biglietto toccandolo
             cardInner.addEventListener('click', () => {
                 if (contentGroup.classList.contains('open')) {
                     cardInner.classList.toggle('is-flipped');
