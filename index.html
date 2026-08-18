@@ -229,9 +229,51 @@
             color: #888;
             font-style: italic;
         }
+
+        /* --- BANNER AUDIO --- */
+        .volume-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        .volume-banner.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .volume-banner.interactive {
+            pointer-events: auto;
+            cursor: pointer;
+            background-color: #9b8cbd; /* Viola dal tuo tema per capire che è cliccabile */
+            box-shadow: 0 10px 25px rgba(155, 140, 189, 0.5);
+        }
     </style>
 </head>
 <body>
+
+    <!-- TRACCIA AUDIO AGGIUNTA -->
+    <audio id="invite-audio" src="voice.mp3" preload="auto"></audio>
+
+    <!-- BANNER GESTIONE AUDIO -->
+    <div id="volume-banner" class="volume-banner">
+        <span id="banner-text">🔊 Alza il volume per ascoltare!</span>
+    </div>
 
     <div class="sticky-container">
         
@@ -276,18 +318,65 @@
             const contentGroup = document.getElementById('content-group');
             const cardInner = document.getElementById('card-inner');
             const scrollHint = document.getElementById('scroll-hint');
+            
+            // Selettori Audio
+            const audio = document.getElementById('invite-audio');
+            const volumeBanner = document.getElementById('volume-banner');
+            const bannerText = document.getElementById('banner-text');
+            let audioAttempted = false; // Flag per far scattare l'audio una sola volta all'apertura
 
             window.addEventListener('scroll', () => {
                 // Apri appena si scorre verso il basso
                 if (window.scrollY > 15) {
-                    contentGroup.classList.add('open');
-                    scrollHint.style.opacity = '0';
+                    
+                    // Condizione per assicurarsi che l'evento scatti SOLO nel momento dell'apertura
+                    if (!contentGroup.classList.contains('open')) {
+                        contentGroup.classList.add('open');
+                        scrollHint.style.opacity = '0';
+
+                        // Gestione "Smart" Audio Autoplay
+                        if (!audioAttempted) {
+                            audioAttempted = true;
+                            let playPromise = audio.play();
+                            
+                            if (playPromise !== undefined) {
+                                playPromise.then(() => {
+                                    // SUCCESSO: Il browser del telefono ha permesso la riproduzione automatica
+                                    bannerText.innerHTML = "🔊 Ricordati di alzare il volume!";
+                                    volumeBanner.classList.add('show');
+                                    volumeBanner.classList.remove('interactive');
+                                    
+                                    // Scompare da solo dopo 2.5 secondi
+                                    setTimeout(() => {
+                                        volumeBanner.classList.remove('show');
+                                    }, 2500);
+                                    
+                                }).catch(error => {
+                                    // BLOCCATO: Il browser ha impedito l'autoplay (comune su Safari/Chrome Mobile)
+                                    bannerText.innerHTML = "🔊 Tocca qui per ascoltare il messaggio";
+                                    volumeBanner.classList.add('show', 'interactive');
+                                    
+                                    // Quando l'utente tocca il banner, sblocca e avvia l'audio
+                                    volumeBanner.addEventListener('click', () => {
+                                        audio.play();
+                                        volumeBanner.classList.remove('show', 'interactive');
+                                    }, { once: true });
+                                });
+                            }
+                        }
+                    }
                 } 
                 // Chiudi SOLO se l'utente scorre intenzionalmente tutto indietro fino allo zero assoluto
                 else if (window.scrollY === 0) {
                     contentGroup.classList.remove('open');
                     scrollHint.style.opacity = '1';
                     cardInner.classList.remove('is-flipped');
+                    
+                    // Ferma la voce, azzera il timer audio e i controlli per permettere un nuovo ascolto
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audioAttempted = false;
+                    volumeBanner.classList.remove('show', 'interactive');
                 }
             });
 
