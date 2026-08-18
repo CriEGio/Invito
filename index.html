@@ -9,22 +9,34 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #fdfaf6; /* Colore di sfondo neutro */
+            background-color: #fdfaf6;
             font-family: 'Georgia', serif;
-            /* Altezza extra per permettere lo scroll */
-            height: 160vh; 
+            /* L'altezza extra serve solo per permettere al dito di fare il gesto dello scroll */
+            height: 150vh; 
+        }
+
+        /* --- CONTENITORE FISSO --- */
+        /* Questo blocca la schermata in modo che non sfugga via mentre si scorre */
+        .sticky-container {
+            position: sticky;
+            top: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden;
+            justify-content: center;
+            overflow: hidden;
         }
 
         .scroll-hint {
-            margin-top: 50px;
+            position: absolute;
+            top: 8%;
             font-size: 1.2rem;
             color: #666;
             text-align: center;
             animation: bounce 2s infinite;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 10;
         }
 
         @keyframes bounce {
@@ -33,13 +45,27 @@
             60% { transform: translateY(5px); }
         }
 
+        /* --- GRUPPO ANIMATO (BUSTA + BOTTONE) --- */
+        .content-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.8s ease-in-out;
+            /* Lo abbassiamo leggermente in partenza per lasciare spazio sopra */
+            margin-top: 15vh; 
+        }
+
+        /* Quando la busta si apre, tutto il gruppo (busta+bottone) scende un po' 
+           per fare spazio al biglietto che sale, mantenendo tutto centrato */
+        .content-group.open {
+            transform: translateY(40px);
+        }
+
         /* --- CONTENITORE BUSTA E BIGLIETTO --- */
         .scene {
             position: relative;
-            margin-top: 100px;
             width: 90vw;
-            max-width: 800px;
-            /* Proporzione basata sulle tue immagini landscape */
+            max-width: 750px;
             aspect-ratio: 2.5 / 1; 
             perspective: 1500px;
         }
@@ -64,7 +90,6 @@
             background-color: #e3d8c8;
             border-radius: 5px;
             z-index: 3;
-            /* Creazione finta chiusura a V della busta */
             clip-path: polygon(0 100%, 100% 100%, 100% 0, 50% 50%, 0 0);
         }
 
@@ -114,46 +139,49 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* Evita l'effetto blu di selezione quando si tocca col dito */
+            user-select: none;
+            -webkit-user-drag: none;
         }
 
-        /* Il retro del biglietto (che contiene le info) */
         .card-back {
             transform: rotateY(180deg);
         }
 
-        /* --- ANIMAZIONI ATTIVATE DA CLASSI --- */
-        /* 1. Busta si apre ed esce il biglietto */
-        .scene.open .envelope-flap {
+        /* --- ANIMAZIONI AL MOMENTO DELL'APERTURA --- */
+        .content-group.open .envelope-flap {
             transform: rotateX(180deg);
-            z-index: 1; /* Va dietro il biglietto quando è aperta */
+            z-index: 1; 
         }
 
-        .scene.open .card-wrapper {
-            transform: translateY(-80%); /* Fa scorrere il biglietto verso l'alto */
-            z-index: 5; /* Porta il biglietto in primissimo piano */
+        .content-group.open .card-wrapper {
+            /* Ora il biglietto sale fino in cima, liberandosi dalla busta */
+            transform: translateY(-95%); 
+            z-index: 5; 
         }
 
-        /* 2. Biglietto si gira */
         .card-inner.is-flipped {
             transform: rotateY(180deg);
         }
 
         /* --- SEZIONE RSVP (BOTTONE) --- */
         .rsvp-section {
-            margin-top: auto;
-            margin-bottom: 50px;
+            /* Agganciato direttamente sotto la busta */
+            margin-top: 30px; 
             text-align: center;
             opacity: 0;
-            transition: opacity 1s ease-in-out;
+            /* Rende il bottone cliccabile solo quando è visibile */
+            visibility: hidden; 
+            transition: opacity 1s ease-in-out, visibility 1s;
         }
 
-        /* Mostra il bottone solo quando la busta è aperta */
-        .scene.open ~ .rsvp-section {
+        .content-group.open .rsvp-section {
             opacity: 1;
+            visibility: visible;
         }
 
         .rsvp-btn {
-            background-color: #e2a527; /* Colore giallo preso dalla grafica */
+            background-color: #e2a527; 
             color: white;
             padding: 15px 30px;
             text-decoration: none;
@@ -166,11 +194,10 @@
         }
 
         .rsvp-btn:hover {
-            background-color: #9b8cbd; /* Colore viola preso dalla grafica */
+            background-color: #9b8cbd; 
             transform: scale(1.05);
         }
 
-        /* Istruzioni per girare il biglietto */
         .tap-hint {
             margin-top: 15px;
             font-size: 0.9rem;
@@ -181,59 +208,64 @@
 </head>
 <body>
 
-    <div class="scroll-hint" id="scroll-hint">
-        Scorri verso il basso per aprire l'invito<br>↓
-    </div>
-
-    <div class="scene" id="envelope-scene">
-        <div class="envelope-back"></div>
-        <div class="envelope-flap"></div>
+    <!-- Questo è il contenitore che rimane fisso e ferma lo scorrimento visivo della pagina -->
+    <div class="sticky-container">
         
-        <div class="card-wrapper" id="card-wrapper">
-            <div class="card-inner" id="card-inner">
-                <!-- Fronte: Immagine con la Poesia -->
-                <div class="card-face card-front">
-                    <img src="fronte.jpg" alt="Fronte Invito">
-                </div>
-                <!-- Retro: Immagine con i Dettagli -->
-                <div class="card-face card-back">
-                    <img src="retro.jpg" alt="Retro Invito - Dettagli">
-                </div>
-            </div>
+        <div class="scroll-hint" id="scroll-hint">
+            Scorri verso il basso per aprire l'invito<br>↓
         </div>
 
-        <div class="envelope-front"></div>
-    </div>
+        <!-- Gruppo che tiene insieme la busta e il bottone per un allineamento perfetto -->
+        <div class="content-group" id="content-group">
+            
+            <div class="scene">
+                <div class="envelope-back"></div>
+                <div class="envelope-flap"></div>
+                
+                <div class="card-wrapper" id="card-wrapper">
+                    <div class="card-inner" id="card-inner">
+                        <div class="card-face card-front">
+                            <img src="image_6616cf.jpg" alt="Fronte Invito">
+                        </div>
+                        <div class="card-face card-back">
+                            <img src="image_6616b2.jpg" alt="Retro Invito - Dettagli">
+                        </div>
+                    </div>
+                </div>
 
-    <div class="rsvp-section">
-        <a href="INSERISCI_QUI_IL_LINK_DEL_TUO_GOOGLE_FORM" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
-        <div class="tap-hint">Tocca il biglietto per girarlo fronte/retro</div>
+                <div class="envelope-front"></div>
+            </div>
+
+            <div class="rsvp-section">
+                <!-- Ricorda di incollare qui il tuo link -->
+                <a href="INSERISCI_QUI_IL_LINK_DEL_TUO_GOOGLE_FORM" target="_blank" class="rsvp-btn">Conferma la tua presenza</a>
+                <div class="tap-hint">Tocca il biglietto per girarlo fronte/retro</div>
+            </div>
+
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const scene = document.getElementById('envelope-scene');
+            const contentGroup = document.getElementById('content-group');
             const cardInner = document.getElementById('card-inner');
             const scrollHint = document.getElementById('scroll-hint');
 
-            // ANIMAZIONE 1: Apri la busta allo scroll
+            // L'evento "scroll" adesso non fa muovere la pagina, ma accende o spegne l'animazione
             window.addEventListener('scroll', () => {
-                // Se l'utente scrolla di almeno 50 pixel, apri la busta
-                if (window.scrollY > 50) {
-                    scene.classList.add('open');
-                    scrollHint.style.opacity = '0'; // Nascondi il testo "Scorri"
+                if (window.scrollY > 30) {
+                    contentGroup.classList.add('open');
+                    scrollHint.style.opacity = '0';
                 } else {
-                    // Opzionale: richiudi la busta se si torna in cima
-                    scene.classList.remove('open');
+                    contentGroup.classList.remove('open');
                     scrollHint.style.opacity = '1';
-                    cardInner.classList.remove('is-flipped'); // Rimetti il biglietto dritto
+                    cardInner.classList.remove('is-flipped');
                 }
             });
 
-            // ANIMAZIONE 2: Gira il biglietto al click/touch
+            // Gira il biglietto toccandolo (solo se la busta è aperta)
             cardInner.addEventListener('click', () => {
-                // Permetti di girare il biglietto solo se la busta è aperta
-                if (scene.classList.contains('open')) {
+                if (contentGroup.classList.contains('open')) {
                     cardInner.classList.toggle('is-flipped');
                 }
             });
