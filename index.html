@@ -50,10 +50,10 @@
             pointer-events: none; 
         }
 
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(10px); }
-            60% { transform: translateY(5px); }
+       @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
         }
 
         /* --- GRUPPO CONTENUTI --- */
@@ -288,8 +288,8 @@
 
     <div class="sticky-container">
         
-        <div class="scroll-hint" id="scroll-hint">
-            Scorri verso il basso per aprire l'invito<br>↓
+       <div class="scroll-hint" id="scroll-hint">
+            ↑<br>Scorri verso l'alto per aprire l'invito
         </div>
 
         <div class="content-group" id="content-group">
